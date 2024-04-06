@@ -2,6 +2,8 @@ import geopandas as gpd
 import pandas as pd
 from pyproj import Proj, transform
 import folium
+import requests
+import json
 
 niteroi = gpd.read_file(r'Limite_de_Bairros\Limite_de_Bairros.shp')
 
@@ -84,3 +86,43 @@ for bairro in lista_bairros:
                   icon = folium.Icon(color = 'black'),).add_to(mapa)
 
 mapa
+
+###############################
+
+# Agora, precisamos encontrar a distancia entre cada bairro, com isso, montaremos uma matriz de distancias
+
+# Criando a matriz
+matriz_distancias = pd.DataFrame(index=lista_bairros, columns=lista_bairros)
+
+# Exemplo abaixo de como pegar a distancia entre o Centro e Itaipu
+
+'''
+import requests
+import json
+
+url = f'http://router.project-osrm.org/route/v1/driving/{df_niteroi['Longitude']['Centro']},{df_niteroi['Latitude']['Centro']};{df_niteroi['Longitude']['Itaipu']},{df_niteroi['Latitude']['Itaipu']}?overview=false'
+
+response = requests.get(url)
+
+resultado = json.loads(response._content.decode('utf-8'))
+
+resultado['routes'][0]['distance']
+'''
+
+# Loop para preencher
+linhas = matriz_distancias.index.values.tolist()
+colunas = matriz_distancias.columns.values.tolist()
+for linha in linhas:
+    for coluna in colunas:
+        url = f'http://router.project-osrm.org/route/v1/driving/{df_niteroi['Longitude'][coluna]},{df_niteroi['Latitude'][coluna]};{df_niteroi['Longitude'][linha]},{df_niteroi['Latitude'][linha]}?overview=false'
+        response = requests.get(url)
+        resultado = json.loads(response._content.decode('utf-8'))
+        distancia = resultado['routes'][0]['distance']
+        # Atualiza a matriz de distancias
+        matriz_distancias.at[linha, coluna] = distancia if linha != coluna else '-'
+
+######################
+
+# Escrevendo o resultado numa planilha
+
+matriz_distancias.to_excel('matriz_distancias.xlsx')
