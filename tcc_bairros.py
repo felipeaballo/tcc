@@ -126,3 +126,5 @@ for linha in linhas:
 # Escrevendo o resultado numa planilha
 
 matriz_distancias.to_excel('matriz_distancias.xlsx')
+
+### Agora, só preciso adicionar os lockers e colocar ele nessa brincadeira da matriz de distancias
